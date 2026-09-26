@@ -3,36 +3,34 @@ import 'package:flutter/material.dart';
 import '../models/task.dart';
 import 'add_task_screen.dart';
 
-/*
-(noted cho branch feature/task-actions)
-Những sửa đổi được thêm trong file này:
-
-Thêm Checkbox (leading): Đổi trạng thái status giữa true / false. Khi được tích, chữ tiêu đề sẽ tự động bị gạch ngang (TextDecoration.lineThrough).
-Thêm Icon Thùng rác (trailing): Khi nhấn vào sẽ gọi hàm _showDeleteConfirmDialog.
-Tạo Dialog AlertDialog xác nhận xóa: Có nút "Hủy" và nút "Xóa". Bấm "Xóa" mới tiến hành loại bỏ task khỏi danh sách.
-Thêm Key cho Appium: Đã gán sẵn các ValueKey như checkbox-task-${task.id}, delete-task-${task.id}, btn_confirm_delete để phục vụ công đoạn viết Automation Test sau này!
-Hỗ trợ filterStatus: Cho phép lọc hiển thị Pending (false), Completed (true) hoặc All (null).
-*/
-
 class TaskListScreen extends StatefulWidget {
-  final bool? filterStatus; // null: tất cả, false: pending, true: completed
-  const TaskListScreen({super.key, this.filterStatus});
+  // null = All, false = Pending, true = Completed
+  final bool? filterStatus;
+
+  const TaskListScreen({
+    super.key,
+    this.filterStatus,
+  });
 
   @override
   State<TaskListScreen> createState() => _TaskListScreenState();
 }
 
 class _TaskListScreenState extends State<TaskListScreen> {
-  // Giữ task khi thoát My Tasks rồi mở lại.
-  // Dữ liệu vẫn tồn tại trong suốt phiên chạy của app.
+  // Keep tasks during the current app session.
   static final List<Task> _savedTasks = [];
 
-  // Lọc danh sách task dựa trên filterStatus được truyền vào
+  // Filter tasks based on the selected status.
   List<Task> get _displayTasks {
     if (widget.filterStatus == null) {
       return _savedTasks;
     }
-    return _savedTasks.where((task) => task.status == widget.filterStatus).toList();
+
+    return _savedTasks
+        .where(
+          (task) => task.status == widget.filterStatus,
+        )
+        .toList();
   }
 
   Future<void> _openAddTask() async {
@@ -69,10 +67,16 @@ class _TaskListScreenState extends State<TaskListScreen> {
       );
   }
 
-  // Cập nhật trạng thái Task dựa theo ID (tránh nhầm chỉ số index khi bị lọc)
-  void _toggleTaskStatus(Task task, bool? newValue) {
+  // Toggle between Pending and Completed.
+  void _toggleTaskStatus(
+    Task task,
+    bool? newValue,
+  ) {
     setState(() {
-      final index = _savedTasks.indexWhere((t) => t.id == task.id);
+      final index = _savedTasks.indexWhere(
+        (savedTask) => savedTask.id == task.id,
+      );
+
       if (index != -1) {
         _savedTasks[index] = task.copyWith(
           status: newValue ?? false,
@@ -81,41 +85,65 @@ class _TaskListScreenState extends State<TaskListScreen> {
     });
   }
 
-  // Hiển thị Hộp thoại Xác nhận Xóa Task dựa theo ID
-  void _showDeleteConfirmDialog(BuildContext context, Task task) {
+  // Show confirmation dialog before deleting a task.
+  void _showDeleteConfirmDialog(
+    BuildContext context,
+    Task task,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Xác nhận xóa'),
-          content: Text('Bạn có chắc chắn muốn xóa task "${task.title}" không?'),
+          title: const Text('Delete Task'),
+
+          content: Text(
+            'Are you sure you want to delete task "${task.title}"?',
+          ),
+
           actions: [
             TextButton(
-              key: const ValueKey('btn_cancel_delete'),
+              key: const ValueKey(
+                'btn_cancel_delete',
+              ),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Hủy'),
+              child: const Text('Cancel'),
             ),
+
             ElevatedButton(
-              key: const ValueKey('btn_confirm_delete'),
+              key: const ValueKey(
+                'btn_confirm_delete',
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
               ),
               onPressed: () {
                 setState(() {
-                  _savedTasks.removeWhere((t) => t.id == task.id);
+                  _savedTasks.removeWhere(
+                    (savedTask) =>
+                        savedTask.id == task.id,
+                  );
                 });
+
                 Navigator.of(dialogContext).pop();
+
                 ScaffoldMessenger.of(context)
                   ..hideCurrentSnackBar()
                   ..showSnackBar(
                     const SnackBar(
-                      content: Text('Task deleted successfully.'),
+                      content: Text(
+                        'Task deleted successfully.',
+                      ),
                     ),
                   );
               },
-              child: const Text('Xóa', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         );
@@ -124,21 +152,30 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
+    final day =
+        date.day.toString().padLeft(2, '0');
+
+    final month =
+        date.month.toString().padLeft(2, '0');
 
     return '$day/$month/${date.year}';
   }
 
   String get _appBarTitle {
-    if (widget.filterStatus == false) return 'Pending Tasks';
-    if (widget.filterStatus == true) return 'Completed Tasks';
+    if (widget.filterStatus == false) {
+      return 'Pending Tasks';
+    }
+
+    if (widget.filterStatus == true) {
+      return 'Completed Tasks';
+    }
+
     return 'Tasks List';
   }
 
   @override
   Widget build(BuildContext context) {
-    final tasks = _displayTasks; // Lấy danh sách đã qua bộ lọc
+    final tasks = _displayTasks;
 
     return Scaffold(
       appBar: AppBar(
@@ -148,89 +185,142 @@ class _TaskListScreenState extends State<TaskListScreen> {
       body: tasks.isEmpty
           ? const _EmptyTaskList()
           : ListView.separated(
-              key: const ValueKey('taskList'),
-              padding: const EdgeInsets.fromLTRB(
+              key: const ValueKey(
+                'taskList',
+              ),
+              padding:
+                  const EdgeInsets.fromLTRB(
                 16,
                 16,
                 16,
                 96,
               ),
-              itemCount: tasks.length, // Đổi từ _tasks.length -> tasks.length
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final task = tasks[index]; // Đổi từ _tasks[index] -> tasks[index]
+              itemCount: tasks.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(
+                height: 8,
+              ),
+              itemBuilder: (
+                context,
+                index,
+              ) {
+                final task = tasks[index];
 
                 return Card(
-                  key: ValueKey('task-${task.id}'),
+                  key: ValueKey(
+                    'task-${task.id}',
+                  ),
                   child: ListTile(
-                    // 1. CHỨC NĂNG COMPLETE / PENDING
+                    // Complete / Pending
                     leading: Checkbox(
-                      key: ValueKey('checkbox-task-${task.id}'),
+                      key: ValueKey(
+                        'checkbox-task-${task.id}',
+                      ),
                       value: task.status,
-                      onChanged: (bool? newValue) {
-                        _toggleTaskStatus(task, newValue);
+                      onChanged: (
+                        bool? newValue,
+                      ) {
+                        _toggleTaskStatus(
+                          task,
+                          newValue,
+                        );
                       },
                     ),
 
-                    // Tiêu đề Task: Gạch ngang nếu task đã hoàn thành
                     title: Text(
                       task.title,
                       style: TextStyle(
-                        decoration: task.status
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                        color: task.status ? Colors.grey : Colors.black,
+                        decoration:
+                            task.status
+                                ? TextDecoration
+                                    .lineThrough
+                                : TextDecoration
+                                    .none,
+                        color: task.status
+                            ? Colors.grey
+                            : Colors.black,
                       ),
                     ),
 
                     subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
                       children: [
-                        if (task.description.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                        if (task.description
+                            .isNotEmpty) ...[
+                          const SizedBox(
+                            height: 4,
+                          ),
+
                           Text(
                             task.description,
                             maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            overflow:
+                                TextOverflow
+                                    .ellipsis,
                             style: TextStyle(
-                              color: task.status ? Colors.grey : Colors.black87,
+                              color:
+                                  task.status
+                                      ? Colors.grey
+                                      : Colors
+                                          .black87,
                             ),
                           ),
                         ],
 
-                        const SizedBox(height: 4),
+                        const SizedBox(
+                          height: 4,
+                        ),
 
                         Text(
                           'Deadline: ${_formatDate(task.deadline)}'
                           ' • Priority: ${task.priority.label}',
                           style: TextStyle(
-                            color: task.status ? Colors.grey : Colors.black54,
+                            color: task.status
+                                ? Colors.grey
+                                : Colors.black54,
                           ),
                         ),
                       ],
                     ),
 
-                    // 2. CHỨC NĂNG DELETE
+                    // Delete Task
                     trailing: IconButton(
-                      key: ValueKey('delete-task-${task.id}'),
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      key: ValueKey(
+                        'delete-task-${task.id}',
+                      ),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                      ),
                       onPressed: () {
-                        _showDeleteConfirmDialog(context, task);
+                        _showDeleteConfirmDialog(
+                          context,
+                          task,
+                        );
                       },
                     ),
 
-                    isThreeLine: task.description.isNotEmpty,
+                    isThreeLine:
+                        task.description.isNotEmpty,
                   ),
                 );
               },
             ),
 
-      floatingActionButton: FloatingActionButton.extended(
-        key: const ValueKey('addTaskButton'),
+      floatingActionButton:
+          FloatingActionButton.extended(
+        key: const ValueKey(
+          'addTaskButton',
+        ),
         onPressed: _openAddTask,
         tooltip: 'Add Task',
-        icon: const Icon(Icons.add),
-        label: const Text('Add Task'),
+        icon: const Icon(
+          Icons.add,
+        ),
+        label: const Text(
+          'Add Task',
+        ),
       ),
     );
   }
@@ -243,24 +333,41 @@ class _EmptyTaskList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding:
+            const EdgeInsets.all(24),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:
+              MainAxisSize.min,
           children: [
             Icon(
               Icons.checklist_rounded,
               size: 64,
-              color: Theme.of(context).colorScheme.primary,
+              color:
+                  Theme.of(context)
+                      .colorScheme
+                      .primary,
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(
+              height: 16,
+            ),
+
             Text(
               'No tasks yet',
-              style: Theme.of(context).textTheme.titleLarge,
+              style:
+                  Theme.of(context)
+                      .textTheme
+                      .titleLarge,
             ),
-            const SizedBox(height: 8),
+
+            const SizedBox(
+              height: 8,
+            ),
+
             const Text(
               'Tap “Add Task” to create your first study task.',
-              textAlign: TextAlign.center,
+              textAlign:
+                  TextAlign.center,
             ),
           ],
         ),
