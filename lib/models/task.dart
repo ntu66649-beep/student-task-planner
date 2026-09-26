@@ -21,6 +21,7 @@ class Task {
     required this.priority,
     this.description = '',
     required this.createdAt,
+    this.status = false,
   });
 
   final String id;
@@ -29,4 +30,26 @@ class Task {
   final DateTime deadline;
   final TaskPriority priority;
   final DateTime createdAt;
+  final bool status;
+
+  // Hàm copyWith giúp tạo object mới khi thay đổi trạng thái isCompleted
+    Task copyWith({
+      String? id,
+      String? title,
+      String? description,
+      DateTime? deadline,
+      TaskPriority? priority,
+      DateTime? createdAt,
+      bool? status,
+    }) {
+      return Task(
+        id: id ?? this.id,
+        title: title ?? this.title,
+        description: description ?? this.description,
+        deadline: deadline ?? this.deadline,
+        priority: priority ?? this.priority,
+        createdAt: createdAt ?? this.createdAt,
+        status: status ?? this.status,
+      );
+    }
 }
