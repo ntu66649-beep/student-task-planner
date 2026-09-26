@@ -18,12 +18,10 @@ class HomePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-
             // ================= WELCOME =================
 
             const Text(
               'Welcome, Student!',
-
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
@@ -34,7 +32,6 @@ class HomePage extends StatelessWidget {
 
             const Text(
               'Manage your tasks and deadlines',
-
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -47,12 +44,17 @@ class HomePage extends StatelessWidget {
 
             Row(
               children: [
-
                 Expanded(
                   child: _buildMenuCard(
                     icon: Icons.task,
                     title: 'My Tasks',
                     subtitle: 'View your tasks',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/tasks',
+                      );
+                    },
                   ),
                 ),
 
@@ -74,7 +76,6 @@ class HomePage extends StatelessWidget {
 
             Row(
               children: [
-
                 Expanded(
                   child: _buildMenuCard(
                     icon: Icons.pending_actions,
@@ -126,45 +127,47 @@ class HomePage extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    VoidCallback? onTap,
   }) {
     return Card(
       elevation: 3,
 
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
 
-        child: Column(
-          children: [
+        child: Padding(
+          padding: const EdgeInsets.all(16),
 
-            Icon(
-              icon,
-              size: 45,
-              color: Colors.blue,
-            ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              title,
-
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 45,
+                color: Colors.blue,
               ),
-            ),
 
-            const SizedBox(height: 5),
+              const SizedBox(height: 10),
 
-            Text(
-              subtitle,
-
-              textAlign: TextAlign.center,
-
-              style: const TextStyle(
-                color: Colors.grey,
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 5),
+
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
