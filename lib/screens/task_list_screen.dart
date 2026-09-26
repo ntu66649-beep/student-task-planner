@@ -188,8 +188,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
               key: const ValueKey(
                 'taskList',
               ),
-              padding:
-                  const EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 16,
                 16,
                 16,
@@ -211,20 +210,27 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     'task-${task.id}',
                   ),
                   child: ListTile(
-                    // Complete / Pending
-                    leading: Checkbox(
-                      key: ValueKey(
-                        'checkbox-task-${task.id}',
+                    // ==================================
+                    // COMPLETE / PENDING
+                    // ==================================
+
+                    leading: Semantics(
+                      label: 'Toggle ${task.title}',
+                      button: true,
+                      child: Checkbox(
+                        key: ValueKey(
+                          'checkbox-task-${task.id}',
+                        ),
+                        value: task.status,
+                        onChanged: (
+                          bool? newValue,
+                        ) {
+                          _toggleTaskStatus(
+                            task,
+                            newValue,
+                          );
+                        },
                       ),
-                      value: task.status,
-                      onChanged: (
-                        bool? newValue,
-                      ) {
-                        _toggleTaskStatus(
-                          task,
-                          newValue,
-                        );
-                      },
                     ),
 
                     title: Text(
@@ -284,21 +290,30 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       ],
                     ),
 
-                    // Delete Task
-                    trailing: IconButton(
-                      key: ValueKey(
-                        'delete-task-${task.id}',
+                    // ==================================
+                    // DELETE
+                    // ==================================
+
+                    trailing: Semantics(
+                      label: 'Delete ${task.title}',
+                      button: true,
+                      child: IconButton(
+                        key: ValueKey(
+                          'delete-task-${task.id}',
+                        ),
+                        tooltip:
+                            'Delete ${task.title}',
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
+                        onPressed: () {
+                          _showDeleteConfirmDialog(
+                            context,
+                            task,
+                          );
+                        },
                       ),
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.red,
-                      ),
-                      onPressed: () {
-                        _showDeleteConfirmDialog(
-                          context,
-                          task,
-                        );
-                      },
                     ),
 
                     isThreeLine:
