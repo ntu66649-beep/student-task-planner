@@ -18,36 +18,36 @@ const options = {
 const driver = await remote(options);
 
 /**
- * Tìm nút LOGIN.
- * Nếu chưa thấy, có thể bàn phím đang che/hierarchy chưa cập nhật,
- * lúc đó thử Back một lần để đóng keyboard rồi tìm lại.
+ * Tim nut LOGIN.
+ * Neu chua thay, co the ban phim dang che hoac hierarchy chua cap nhat.
+ * Thu dong ban phim bang Back roi tim lai.
  */
 async function findLoginButton() {
 
-    // Cách 1: accessibility id
+    // Cach 1: accessibility id
     let loginButton = await driver.$('~LOGIN');
 
     if (await loginButton.isExisting()) {
         return loginButton;
     }
 
-    console.log('Chưa thấy LOGIN -> thử đóng bàn phím');
+    console.log('Chua thay LOGIN -> thu dong ban phim');
 
     try {
         await driver.back();
         await driver.pause(1200);
     } catch (error) {
-        console.log('Không cần đóng bàn phím hoặc Back không thực hiện được');
+        console.log('Khong can dong ban phim hoac Back khong thuc hien duoc');
     }
 
-    // Thử lại accessibility id
+    // Thu lai accessibility id
     loginButton = await driver.$('~LOGIN');
 
     if (await loginButton.isExisting()) {
         return loginButton;
     }
 
-    // Cách 2: Android UiAutomator
+    // Cach 2: Android UiAutomator
     loginButton = await driver.$(
         'android=new UiSelector().description("LOGIN")'
     );
@@ -56,7 +56,7 @@ async function findLoginButton() {
         return loginButton;
     }
 
-    // Cách 3: XPath dự phòng
+    // Cach 3: XPath du phong
     loginButton = await driver.$(
         '//android.widget.Button[@content-desc="LOGIN"]'
     );
@@ -65,7 +65,7 @@ async function findLoginButton() {
         return loginButton;
     }
 
-    throw new Error('Không tìm thấy nút LOGIN');
+    throw new Error('Khong tim thay nut LOGIN');
 }
 
 
@@ -76,34 +76,35 @@ try {
     console.log('START LOGIN TEST');
     console.log('============================');
 
+
     /*
      * STEP 1
-     * Nếu app hiện đang ở Home,
-     * logout để đưa app về trạng thái Login ban đầu.
+     * Neu app hien dang o Home,
+     * Logout de dua app ve trang thai Login ban dau.
      */
-    console.log('STEP 1: Kiểm tra trạng thái app');
+    console.log('STEP 1: Kiem tra trang thai app');
 
     const logoutButton = await driver.$('~LOGOUT');
 
     if (await logoutButton.isExisting()) {
 
-        console.log('App đang ở Home -> Logout');
+        console.log('App dang o Home -> Logout');
 
         await logoutButton.click();
         await driver.pause(1200);
 
     } else {
 
-        console.log('App đang ở màn Login');
+        console.log('App dang o man Login');
 
     }
 
 
     /*
      * STEP 2
-     * Tìm Username và Password.
+     * Tim Username va Password.
      */
-    console.log('STEP 2: Tìm Username và Password');
+    console.log('STEP 2: Tim Username va Password');
 
     const usernameField = await driver.$(
         'android=new UiSelector()' +
@@ -126,14 +127,14 @@ try {
         timeout: 10000
     });
 
-    console.log('Đã tìm thấy 2 ô input');
+    console.log('Da tim thay 2 o input');
 
 
     /*
      * STEP 3
-     * Xóa dữ liệu cũ rồi nhập Username.
+     * Xoa du lieu cu roi nhap Username.
      */
-    console.log('STEP 3: Nhập Username');
+    console.log('STEP 3: Nhap Username');
 
     await usernameField.click();
 
@@ -150,9 +151,9 @@ try {
 
     /*
      * STEP 4
-     * Xóa dữ liệu cũ rồi nhập Password.
+     * Xoa du lieu cu roi nhap Password.
      */
-    console.log('STEP 4: Nhập Password');
+    console.log('STEP 4: Nhap Password');
 
     await passwordField.click();
 
@@ -164,14 +165,14 @@ try {
 
     await driver.pause(700);
 
-    console.log('Password đã nhập');
+    console.log('Password da nhap');
 
 
     /*
      * STEP 5
-     * Tìm nút LOGIN.
+     * Tim nut LOGIN.
      */
-    console.log('STEP 5: Tìm nút LOGIN');
+    console.log('STEP 5: Tim nut LOGIN');
 
     const loginButton = await findLoginButton();
 
@@ -179,28 +180,28 @@ try {
         timeout: 10000
     });
 
-    console.log('Đã tìm thấy nút LOGIN');
+    console.log('Da tim thay nut LOGIN');
 
 
     /*
      * STEP 6
      * Click LOGIN.
      */
-    console.log('STEP 6: Bấm LOGIN');
+    console.log('STEP 6: Bam LOGIN');
 
     await loginButton.click();
 
-    console.log('Đã bấm LOGIN');
+    console.log('Da bam LOGIN');
 
     await driver.pause(1500);
 
 
     /*
      * STEP 7
-     * Kiểm tra Home Dashboard.
-     * Nếu LOGOUT xuất hiện tức là Login thành công.
+     * Kiem tra Home Dashboard.
+     * Neu LOGOUT xuat hien tuc la Login thanh cong.
      */
-    console.log('STEP 7: Kiểm tra Home Dashboard');
+    console.log('STEP 7: Kiem tra Home Dashboard');
 
     const logoutAfterLogin = await driver.$('~LOGOUT');
 
@@ -209,13 +210,13 @@ try {
     });
 
     console.log('');
-    console.log('PASS: LOGIN THÀNH CÔNG');
-    console.log('PASS: ĐÃ VÀO HOME DASHBOARD');
+    console.log('PASS: LOGIN THANH CONG');
+    console.log('PASS: DA VAO HOME DASHBOARD');
 
 
     /*
      * STEP 8
-     * Logout để đưa app về trạng thái ban đầu.
+     * Logout de dua app ve trang thai ban dau.
      */
     console.log('STEP 8: Logout');
 
@@ -225,7 +226,7 @@ try {
 
 
     /*
-     * Kiểm tra đã quay lại Login.
+     * Kiem tra da quay lai Login.
      */
     const loginAfterLogout = await driver.$('~LOGIN');
 
@@ -233,7 +234,7 @@ try {
         timeout: 10000
     });
 
-    console.log('PASS: LOGOUT THÀNH CÔNG');
+    console.log('PASS: LOGOUT THANH CONG');
 
     console.log('');
     console.log('============================');
@@ -245,7 +246,7 @@ try {
 
     console.log('');
     console.log('============================');
-    console.log('FAIL: TEST BỊ LỖI');
+    console.log('FAIL: TEST BI LOI');
     console.log('============================');
 
     console.error(error.message);
@@ -255,7 +256,7 @@ try {
     try {
         await driver.deleteSession();
     } catch (error) {
-        console.log('Session đã kết thúc');
+        console.log('Session da ket thuc');
     }
 
 }
