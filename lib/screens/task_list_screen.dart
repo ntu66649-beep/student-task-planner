@@ -1,551 +1,286 @@
 import 'package:flutter/material.dart';
 
+import '../data/task_store.dart';
 import '../models/task.dart';
+import '../ui/planner_theme.dart';
+import '../ui/task_card.dart';
 import 'add_task_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
-  // null = All, false = Pending, true = Completed
+  const TaskListScreen({super.key, this.filterStatus});
   final bool? filterStatus;
-
-  const TaskListScreen({
-    super.key,
-    this.filterStatus,
-  });
-
-  // ============================================================
-  // SHARED TASK LIST
-  // ============================================================
-
-  static final List<Task> savedTasks = [];
-
-  // ============================================================
-  // ADD TASK TO SHARED LIST
-  // ============================================================
-
-  static void addTask(Task task) {
-    savedTasks.add(task);
-
-    savedTasks.sort((a, b) {
-      final byDeadline = a.deadline.compareTo(
-        b.deadline,
-      );
-
-      if (byDeadline != 0) {
-        return byDeadline;
-      }
-
-      return a.createdAt.compareTo(
-        b.createdAt,
-      );
-    });
-  }
-
+  static List<Task> get savedTasks => TaskStore.tasks;
+  static void addTask(Task task) => TaskStore.addTask(task);
   @override
-  State<TaskListScreen> createState() =>
-      _TaskListScreenState();
+  State<TaskListScreen> createState() => _TaskListScreenState();
 }
 
 class _TaskListScreenState extends State<TaskListScreen> {
-  // ============================================================
-  // FILTER TASKS
-  // ============================================================
-
-  List<Task> get _displayTasks {
-    if (widget.filterStatus == null) {
-      return TaskListScreen.savedTasks;
-    }
-
-    return TaskListScreen.savedTasks
-        .where(
-          (task) =>
-              task.status == widget.filterStatus,
-        )
-        .toList();
+  final _search = TextEditingController();
+  bool? _status;
+  @override
+  void initState() {
+    super.initState();
+    _status = widget.filterStatus;
   }
 
-  // ============================================================
-  // OPEN ADD TASK SCREEN
-  // ============================================================
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
+  List<Task> get _displayTasks => TaskListScreen.savedTasks
+      .where(
+        (task) =>
+            (_status == null || task.status == _status) &&
+            ('${task.title} ${task.description}'.toLowerCase().contains(
+              _search.text.trim().toLowerCase(),
+            )),
+      )
+      .toList();
   Future<void> _openAddTask() async {
-    final Task? task =
-        await Navigator.of(context).push<Task>(
-      MaterialPageRoute<Task>(
-        builder: (_) => const AddTaskScreen(),
+    final task = await Navigator.push<Task>(
+      context,
+      MaterialPageRoute(builder: (_) => const AddTaskScreen()),
+    );
+    if (task == null || !mounted) return;
+    setState(() => TaskListScreen.addTask(task));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Task added successfully.')));
+  }
+
+  Future<void> _delete(Task task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.delete_outline_rounded, color: orange),
+        title: const Text('Delete Task'),
+        content: Text('Are you sure you want to delete task "${task.title}"?'),
+        actions: [
+          TextButton(
+            key: const ValueKey('btn_cancel_delete'),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const ValueKey('btn_confirm_delete'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFAB423B),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
-
-    if (task == null || !mounted) {
-      return;
-    }
-
-    setState(() {
-      TaskListScreen.addTask(task);
-    });
-
+    if (confirmed != true || !mounted) return;
+    setState(() => TaskStore.deleteTask(task.id));
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Task added successfully.',
-          ),
-        ),
+        const SnackBar(content: Text('Task deleted successfully.')),
       );
   }
-
-  // ============================================================
-  // TOGGLE PENDING / COMPLETED
-  // ============================================================
-
-  void _toggleTaskStatus(
-    Task task,
-    bool? newValue,
-  ) {
-    setState(() {
-      final index =
-          TaskListScreen.savedTasks.indexWhere(
-        (savedTask) =>
-            savedTask.id == task.id,
-      );
-
-      if (index != -1) {
-        TaskListScreen.savedTasks[index] =
-            task.copyWith(
-          status: newValue ?? false,
-        );
-      }
-    });
-  }
-
-  // ============================================================
-  // DELETE CONFIRM DIALOG
-  // ============================================================
-
-  void _showDeleteConfirmDialog(
-    BuildContext context,
-    Task task,
-  ) {
-    showDialog(
-      context: context,
-
-      builder: (
-        BuildContext dialogContext,
-      ) {
-        return AlertDialog(
-          title: const Text(
-            'Delete Task',
-          ),
-
-          content: Text(
-            'Are you sure you want to delete task "${task.title}"?',
-          ),
-
-          actions: [
-            // ================= CANCEL =================
-
-            TextButton(
-              key: const ValueKey(
-                'btn_cancel_delete',
-              ),
-
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-              },
-
-              child: const Text(
-                'Cancel',
-              ),
-            ),
-
-            // ================= DELETE =================
-
-            ElevatedButton(
-              key: const ValueKey(
-                'btn_confirm_delete',
-              ),
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
-
-              onPressed: () {
-                setState(() {
-                  TaskListScreen.savedTasks.removeWhere(
-                    (savedTask) =>
-                        savedTask.id == task.id,
-                  );
-                });
-
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Task deleted successfully.',
-                      ),
-                    ),
-                  );
-              },
-
-              child: const Text(
-                'Delete',
-
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // FORMAT DATE
-  // ============================================================
-
-  String _formatDate(
-    DateTime date,
-  ) {
-    final day = date.day
-        .toString()
-        .padLeft(
-          2,
-          '0',
-        );
-
-    final month = date.month
-        .toString()
-        .padLeft(
-          2,
-          '0',
-        );
-
-    return '$day/$month/${date.year}';
-  }
-
-  // ============================================================
-  // APP BAR TITLE
-  // ============================================================
-
-  String get _appBarTitle {
-    if (widget.filterStatus == false) {
-      return 'Pending Tasks';
-    }
-
-    if (widget.filterStatus == true) {
-      return 'Completed Tasks';
-    }
-
-    return 'Tasks List';
-  }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final tasks = _displayTasks;
-
+    final all = TaskListScreen.savedTasks;
+    final completed = all.where((task) => task.status).length;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _appBarTitle,
+        title: const Text(
+          'My Tasks',
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
         ),
       ),
-
-      body: tasks.isEmpty
-
-          // ================= EMPTY =================
-          ? const _EmptyTaskList()
-
-          // ================= TASK LIST =================
-          : ListView.separated(
-              key: const ValueKey(
-                'taskList',
-              ),
-
-              padding:
-                  const EdgeInsets.fromLTRB(
-                16,
-                16,
-                16,
-                96,
-              ),
-
-              itemCount: tasks.length,
-
-              separatorBuilder: (
-                _,
-                __,
-              ) =>
-                  const SizedBox(
-                height: 8,
-              ),
-
-              itemBuilder: (
-                context,
-                index,
-              ) {
-                final task =
-                    tasks[index];
-
-                return Card(
-                  key: ValueKey(
-                    'task-${task.id}',
-                  ),
-
-                  child: ListTile(
-                    // ==================================
-                    // COMPLETE / PENDING
-                    // ==================================
-
-                    leading: Semantics(
-                      label:
-                          'Toggle ${task.title}',
-                      button: true,
-
-                      child: Checkbox(
-                        key: ValueKey(
-                          'checkbox-task-${task.id}',
+      body: SafeArea(
+        child: PlannerContent(
+          child: CustomScrollView(
+            key: const ValueKey('taskList'),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 14, 24, 20),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionLabel('LESS OVERWHELM. MORE MOMENTUM.'),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Your plans,\nin one place.',
+                        style: TextStyle(
+                          fontSize: 35,
+                          height: 1.1,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1.2,
                         ),
-
-                        value:
-                            task.status,
-
-                        onChanged: (
-                          bool? newValue,
-                        ) {
-                          _toggleTaskStatus(
-                            task,
-                            newValue,
-                          );
-                        },
                       ),
-                    ),
-
-                    // ==================================
-                    // TITLE
-                    // ==================================
-
-                    title: Text(
-                      task.title,
-
-                      style: TextStyle(
-                        decoration:
-                            task.status
-                                ? TextDecoration
-                                    .lineThrough
-                                : TextDecoration
-                                    .none,
-
-                        color:
-                            task.status
-                                ? Colors.grey
-                                : Colors.black,
+                      const SizedBox(height: 12),
+                      Text(
+                        '${all.length - completed} pending · $completed completed',
+                        style: const TextStyle(color: muted),
                       ),
-                    ),
-
-                    // ==================================
-                    // DESCRIPTION / DEADLINE
-                    // ==================================
-
-                    subtitle: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
-
-                      children: [
-                        if (task
-                            .description
-                            .isNotEmpty) ...[
-                          const SizedBox(
-                            height: 4,
-                          ),
-
-                          Text(
-                            task.description,
-
-                            maxLines: 2,
-
-                            overflow:
-                                TextOverflow
-                                    .ellipsis,
-
-                            style:
-                                TextStyle(
-                              color:
-                                  task.status
-                                      ? Colors
-                                          .grey
-                                      : Colors
-                                          .black87,
+                      const SizedBox(height: 24),
+                      TextField(
+                        key: const ValueKey('taskSearchField'),
+                        controller: _search,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: 'Search your tasks',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: _search.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  tooltip: 'Clear search',
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: () =>
+                                      setState(() => _search.clear()),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final entry in <(String, bool?)>[
+                              ('All', null),
+                              ('Pending', false),
+                              ('Completed', true),
+                            ])
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(entry.$1),
+                                  selected: _status == entry.$2,
+                                  showCheckmark: false,
+                                  selectedColor: teal,
+                                  backgroundColor: Colors.white,
+                                  labelStyle: TextStyle(
+                                    color: _status == entry.$2
+                                        ? Colors.white
+                                        : muted,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  side: BorderSide(
+                                    color: _status == entry.$2 ? teal : line,
+                                  ),
+                                  onSelected: (_) =>
+                                      setState(() => _status = entry.$2),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${tasks.length} ${tasks.length == 1 ? 'task' : 'tasks'}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ],
-
-                        const SizedBox(
-                          height: 4,
-                        ),
-
-                        Text(
-                          'Deadline: ${_formatDate(task.deadline)}'
-                          ' • Priority: ${task.priority.label}',
-
-                          style:
-                              TextStyle(
-                            color:
-                                task.status
-                                    ? Colors
-                                        .grey
-                                    : Colors
-                                        .black54,
+                          const Icon(
+                            Icons.sort_rounded,
+                            size: 16,
+                            color: muted,
                           ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Deadline first',
+                            style: TextStyle(fontSize: 12, color: muted),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (tasks.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(28, 20, 28, 110),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(22),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE8EDE3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.checklist_rounded,
+                            size: 40,
+                            color: teal,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _search.text.isNotEmpty
+                              ? 'No matching tasks'
+                              : _status == null
+                              ? 'No tasks yet'
+                              : _status == true
+                              ? 'No completed tasks yet'
+                              : 'Nothing left to do',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          _search.text.isNotEmpty
+                              ? 'Try a different title or clear your search.'
+                              : _status == true
+                              ? 'Your finished tasks will appear here.'
+                              : 'Tap “Add Task” to create your first study task.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: muted, height: 1.6),
                         ),
                       ],
                     ),
-
-                    // ==================================
-                    // DELETE
-                    // ==================================
-
-                    trailing: Semantics(
-                      label:
-                          'Delete ${task.title}',
-
-                      button: true,
-
-                      child: IconButton(
-                        key: ValueKey(
-                          'delete-task-${task.id}',
-                        ),
-
-                        tooltip:
-                            'Delete ${task.title}',
-
-                        icon:
-                            const Icon(
-                          Icons
-                              .delete_outline,
-
-                          color:
-                              Colors.red,
-                        ),
-
-                        onPressed: () {
-                          _showDeleteConfirmDialog(
-                            context,
-                            task,
-                          );
-                        },
-                      ),
-                    ),
-
-                    isThreeLine:
-                        task.description
-                            .isNotEmpty,
                   ),
-                );
-              },
-            ),
-
-      // ============================================================
-      // ADD TASK BUTTON
-      // ============================================================
-
-      floatingActionButton:
-          FloatingActionButton.extended(
-        key: const ValueKey(
-          'addTaskButton',
-        ),
-
-        onPressed: _openAddTask,
-
-        tooltip: 'Add Task',
-
-        icon: const Icon(
-          Icons.add,
-        ),
-
-        label: const Text(
-          'Add Task',
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 110),
+                  sliver: SliverList.builder(
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+                      return TaskCard(
+                        key: ValueKey('task-${task.id}'),
+                        task: task,
+                        onChanged: (value) => setState(
+                          () => TaskStore.updateTask(
+                            task.copyWith(status: value ?? false),
+                          ),
+                        ),
+                        onDelete: () => _delete(task),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-}
-
-// ============================================================
-// EMPTY TASK LIST
-// ============================================================
-
-class _EmptyTaskList
-    extends StatelessWidget {
-  const _EmptyTaskList();
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return Center(
-      child: Padding(
-        padding:
-            const EdgeInsets.all(
-          24,
-        ),
-
-        child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
-
-          children: [
-            Icon(
-              Icons.checklist_rounded,
-
-              size: 64,
-
-              color:
-                  Theme.of(context)
-                      .colorScheme
-                      .primary,
-            ),
-
-            const SizedBox(
-              height: 16,
-            ),
-
-            Text(
-              'No tasks yet',
-
-              style:
-                  Theme.of(context)
-                      .textTheme
-                      .titleLarge,
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            const Text(
-              'Tap “Add Task” to create your first study task.',
-
-              textAlign:
-                  TextAlign.center,
-            ),
-          ],
-        ),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const ValueKey('addTaskButton'),
+        tooltip: 'Add Task',
+        onPressed: _openAddTask,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add Task'),
       ),
     );
   }

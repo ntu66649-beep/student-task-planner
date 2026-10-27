@@ -1,45 +1,28 @@
 import 'package:flutter/material.dart';
 
-import 'login.dart';
 import 'home.dart';
+import 'login.dart';
 import 'screens/task_list_screen.dart';
+import 'ui/planner_theme.dart';
 
-void main() {
-  runApp(const StudentTaskPlanner());
-}
+void main() => runApp(const StudentTaskPlanner());
 
 class StudentTaskPlanner extends StatelessWidget {
   const StudentTaskPlanner({super.key});
-
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Student Task Planner',
-
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2563EB),
-        ),
-        useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          filled: true,
-        ),
-      ),
-
-      initialRoute: '/login',
-
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-        '/tasks': (context) => const TaskListScreen(),
-      },
-    );
-  }
+  Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    title: 'Student Task Planner',
+    theme: plannerTheme(),
+    initialRoute: '/login',
+    routes: {
+      '/login': (_) => const LoginPage(),
+      '/home': (_) => const HomePage(),
+      '/tasks': (_) => const TaskListScreen(),
+    },
+  );
 }
 
-// Giữ alias này để các test cũ của Member 3
-// nếu gọi MyApp() vẫn có thể hoạt động.
 class MyApp extends StudentTaskPlanner {
   const MyApp({super.key});
 }

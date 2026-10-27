@@ -6,13 +6,12 @@ import 'package:student_task_planner/screens/task_list_screen.dart';
 import 'package:student_task_planner/utils/task_validators.dart';
 
 void main() {
+  setUp(() => TaskListScreen.savedTasks.clear());
   // =========================================================
   // MEMBER 1 - LOGIN TEST
   // =========================================================
 
-  testWidgets('Login page displays correctly', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Login page displays correctly', (WidgetTester tester) async {
     await tester.pumpWidget(const StudentTaskPlanner());
 
     expect(find.text('Student Task Planner'), findsOneWidget);
@@ -25,180 +24,121 @@ void main() {
   // MEMBER 3 - ADD TASK TEST
   // =========================================================
 
-  Future<void> openAddTaskScreen(
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: TaskListScreen(),
-      ),
-    );
+  Future<void> openAddTaskScreen(WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TaskListScreen()));
 
-    await tester.tap(
-      find.byKey(const ValueKey('addTaskButton')),
-    );
+    await tester.tap(find.byKey(const ValueKey('addTaskButton')));
 
     await tester.pumpAndSettle();
   }
 
-  testWidgets(
-    'TC01 - Add a valid task and show it in task list',
-    (WidgetTester tester) async {
-      await openAddTaskScreen(tester);
+  testWidgets('TC01 - Add a valid task and show it in task list', (
+    WidgetTester tester,
+  ) async {
+    await openAddTaskScreen(tester);
 
-      await tester.enterText(
-        find.byKey(const ValueKey('taskTitleField')),
-        'Submit SWT301 assignment',
-      );
+    await tester.enterText(
+      find.byKey(const ValueKey('taskTitleField')),
+      'Submit SWT301 assignment',
+    );
 
-      await tester.tap(
-        find.byKey(const ValueKey('taskDeadlineField')),
-      );
+    await tester.ensureVisible(find.byKey(const ValueKey('taskDeadlineField')));
+    await tester.tap(find.byKey(const ValueKey('taskDeadlineField')));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('OK'));
+    await tester.tap(find.text('OK'));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const ValueKey('saveTaskButton')),
-      );
+    await tester.tap(find.byKey(const ValueKey('saveTaskButton')));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      expect(
-        find.text('Submit SWT301 assignment'),
-        findsOneWidget,
-      );
+    expect(find.text('Submit SWT301 assignment'), findsOneWidget);
 
-      expect(
-        find.text('Task added successfully.'),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(find.text('Task added successfully.'), findsOneWidget);
+  });
 
-  testWidgets(
-    'TC02 - Empty title is rejected',
-    (WidgetTester tester) async {
-      await openAddTaskScreen(tester);
+  testWidgets('TC02 - Empty title is rejected', (WidgetTester tester) async {
+    await openAddTaskScreen(tester);
 
-      await tester.tap(
-        find.byKey(const ValueKey('taskDeadlineField')),
-      );
+    await tester.ensureVisible(find.byKey(const ValueKey('taskDeadlineField')));
+    await tester.tap(find.byKey(const ValueKey('taskDeadlineField')));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('OK'));
+    await tester.tap(find.text('OK'));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const ValueKey('saveTaskButton')),
-      );
+    await tester.tap(find.byKey(const ValueKey('saveTaskButton')));
 
-      await tester.pump();
+    await tester.pump();
 
-      expect(
-        find.text('Title is required.'),
-        findsOneWidget,
-      );
+    expect(find.text('Title is required.'), findsOneWidget);
 
-      expect(
-        find.text('Add Task'),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(find.text('Add Task'), findsOneWidget);
+  });
 
-  testWidgets(
-    'TC03 - Empty deadline is rejected',
-    (WidgetTester tester) async {
-      await openAddTaskScreen(tester);
+  testWidgets('TC03 - Empty deadline is rejected', (WidgetTester tester) async {
+    await openAddTaskScreen(tester);
 
-      await tester.enterText(
-        find.byKey(const ValueKey('taskTitleField')),
-        'Read chapter 5',
-      );
+    await tester.enterText(
+      find.byKey(const ValueKey('taskTitleField')),
+      'Read chapter 5',
+    );
 
-      await tester.tap(
-        find.byKey(const ValueKey('saveTaskButton')),
-      );
+    await tester.tap(find.byKey(const ValueKey('saveTaskButton')));
 
-      await tester.pump();
+    await tester.pump();
 
-      expect(
-        find.text('Deadline is required.'),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(find.text('Deadline is required.'), findsOneWidget);
+  });
 
-  test(
-    'TC04 - Past deadline is rejected by validator',
-    () {
-      final now = DateTime(2026, 9, 26, 15);
-      final yesterday = DateTime(2026, 9, 25, 23, 59);
+  test('TC04 - Past deadline is rejected by validator', () {
+    final now = DateTime(2026, 9, 26, 15);
+    final yesterday = DateTime(2026, 9, 25, 23, 59);
 
-      expect(
-        validateTaskDeadline(
-          yesterday,
-          now,
-        ),
-        'Deadline cannot be in the past.',
-      );
-    },
-  );
+    expect(
+      validateTaskDeadline(yesterday, now),
+      'Deadline cannot be in the past.',
+    );
+  });
 
-  test(
-    'Deadline on the current day is valid',
-    () {
-      final now = DateTime(2026, 9, 26, 15);
-      final todayMorning = DateTime(2026, 9, 26, 8);
+  test('Deadline on the current day is valid', () {
+    final now = DateTime(2026, 9, 26, 15);
+    final todayMorning = DateTime(2026, 9, 26, 8);
 
-      expect(
-        validateTaskDeadline(
-          todayMorning,
-          now,
-        ),
-        isNull,
-      );
-    },
-  );
+    expect(validateTaskDeadline(todayMorning, now), isNull);
+  });
 
-  testWidgets(
-    'TC05 - Rapid Save taps do not add duplicate tasks',
-    (WidgetTester tester) async {
-      await openAddTaskScreen(tester);
+  testWidgets('TC05 - Rapid Save taps do not add duplicate tasks', (
+    WidgetTester tester,
+  ) async {
+    await openAddTaskScreen(tester);
 
-      await tester.enterText(
-        find.byKey(const ValueKey('taskTitleField')),
-        'One task only',
-      );
+    await tester.enterText(
+      find.byKey(const ValueKey('taskTitleField')),
+      'One task only',
+    );
 
-      await tester.tap(
-        find.byKey(const ValueKey('taskDeadlineField')),
-      );
+    await tester.ensureVisible(find.byKey(const ValueKey('taskDeadlineField')));
+    await tester.tap(find.byKey(const ValueKey('taskDeadlineField')));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('OK'));
+    await tester.tap(find.text('OK'));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      final saveButton =
-          find.byKey(const ValueKey('saveTaskButton'));
+    final saveButton = find.byKey(const ValueKey('saveTaskButton'));
 
-      await tester.tap(saveButton);
-      await tester.tap(saveButton);
+    await tester.tap(saveButton);
+    await tester.tap(saveButton);
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      expect(
-        find.text('One task only'),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(find.text('One task only'), findsOneWidget);
+  });
 }

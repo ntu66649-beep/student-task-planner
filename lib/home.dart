@@ -3,197 +3,288 @@ import 'package:flutter/material.dart';
 import 'models/task.dart';
 import 'screens/task_list_screen.dart';
 import 'screens/add_task_screen.dart';
+import 'ui/planner_theme.dart';
+import 'ui/task_card.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  Future<void> _openTasks([bool? status]) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => TaskListScreen(filterStatus: status),
+      ),
+    );
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _addTask() async {
+    final task = await Navigator.push<Task>(
+      context,
+      MaterialPageRoute(builder: (_) => const AddTaskScreen()),
+    );
+    if (task == null || !mounted) return;
+    setState(() => TaskListScreen.addTask(task));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Task added successfully.')));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final tasks = TaskListScreen.savedTasks;
+    final completed = tasks.where((task) => task.status).length;
+    final pending = tasks.length - completed;
+    final upcoming = tasks.where((task) => !task.status).take(3).toList();
+    final progress = tasks.isEmpty ? 0.0 : completed / tasks.length;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Student Task Planner'),
-        centerTitle: true,
+        toolbarHeight: 80,
+        title: const Brand(),
+        actions: [
+          IconButton(
+            tooltip: 'LOGOUT',
+            onPressed: () => Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (_) => false,
+            ),
+            icon: const Icon(Icons.logout_rounded),
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
-
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
+        child: PlannerContent(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
             children: [
-              // ================= WELCOME =================
-
-              const Text(
-                'Welcome, Student!',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                'Manage your tasks and deadlines',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              // ================= ROW 1 =================
-
               Row(
                 children: [
-                  // ================= MY TASKS =================
-
-                  Expanded(
-                    child: _buildMenuCard(
-                      icon: Icons.task,
-                      title: 'My Tasks',
-                      subtitle: 'View your tasks',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return const TaskListScreen(
-                                filterStatus: null,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
+                  const Expanded(child: SectionLabel('YOUR STUDENT PLANNER')),
+                  Text(
+                    friendlyDate(DateTime.now()),
+                    style: const TextStyle(color: muted, fontSize: 12),
                   ),
-
-                  const SizedBox(width: 15),
-
-                  // ================= ADD TASK =================
-
-                  Expanded(
-                    child: _buildMenuCard(
-                      icon: Icons.add_task,
-                      title: 'Add Task',
-                      subtitle: 'Create new task',
-                      onTap: () async {
-                        final Task? task =
-                            await Navigator.of(context).push<Task>(
-                          MaterialPageRoute<Task>(
-                            builder: (context) {
-                              return const AddTaskScreen();
-                            },
-                          ),
-                        );
-
-                        if (task == null) {
-                          return;
-                        }
-
-                        // Lưu task vào danh sách dùng chung
-                        TaskListScreen.addTask(task);
-
-                        if (!context.mounted) {
-                          return;
-                        }
-
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Task added successfully.',
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Make room for\nwhat matters.',
+                style: TextStyle(
+                  fontSize: 39,
+                  height: 1.1,
+                  letterSpacing: -1.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Welcome, Student! A fresh start, one task at a time.',
+                style: TextStyle(color: muted, height: 1.6),
+              ),
+              const SizedBox(height: 28),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: ink,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) => Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'A LITTLE PROGRESS, EVERY DAY',
+                              style: TextStyle(
+                                color: Color(0xFFBFCEC4),
+                                fontSize: 10,
+                                letterSpacing: 1.5,
                               ),
                             ),
-                          );
-                      },
-                    ),
+                            const SizedBox(height: 14),
+                            Text(
+                              tasks.isEmpty
+                                  ? 'Your next chapter\nstarts here.'
+                                  : pending == 0
+                                  ? 'All done.\nTake a well-earned break.'
+                                  : '$pending tasks to go.\nYou’ve got this.',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 27,
+                                height: 1.2,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -.5,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            FilledButton.icon(
+                              onPressed: _addTask,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFECC78D),
+                                foregroundColor: ink,
+                              ),
+                              icon: const Icon(Icons.add_rounded, size: 20),
+                              label: const Text('Add Task'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (constraints.maxWidth > 280) ...[
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox.expand(
+                                child: ExcludeSemantics(
+                                  child: CircularProgressIndicator(
+                                    value: progress,
+                                    strokeWidth: 6,
+                                    backgroundColor: Colors.white.withValues(
+                                      alpha: .12,
+                                    ),
+                                    color: const Color(0xFFECC78D),
+                                    strokeCap: StrokeCap.round,
+                                  ),
+                                ),
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${(progress * 100).round()}%',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 23,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'complete',
+                                    style: TextStyle(
+                                      color: Color(0xFFBFCEC4),
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
               ),
-
-              const SizedBox(height: 20),
-
-              // ================= ROW 2 =================
-
+              const SizedBox(height: 24),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cards = [
+                    _Stat(
+                      label: 'My Tasks',
+                      value: tasks.length,
+                      icon: Icons.layers_outlined,
+                      color: teal,
+                      onTap: () => _openTasks(),
+                    ),
+                    _Stat(
+                      label: 'Pending',
+                      value: pending,
+                      icon: Icons.schedule_rounded,
+                      color: orange,
+                      onTap: () => _openTasks(false),
+                    ),
+                    _Stat(
+                      label: 'Completed',
+                      value: completed,
+                      icon: Icons.task_alt_rounded,
+                      color: teal,
+                      onTap: () => _openTasks(true),
+                    ),
+                  ];
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < cards.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 10),
+                        Expanded(child: cards[i]),
+                      ],
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 28),
               Row(
                 children: [
-                  // ================= PENDING =================
-
-                  Expanded(
-                    child: _buildMenuCard(
-                      icon: Icons.pending_actions,
-                      title: 'Pending',
-                      subtitle: 'Tasks to do',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return const TaskListScreen(
-                                filterStatus: false,
-                              );
-                            },
-                          ),
-                        );
-                      },
+                  const Expanded(
+                    child: Text(
+                      'Up next',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -.5,
+                      ),
                     ),
                   ),
-
-                  const SizedBox(width: 15),
-
-                  // ================= COMPLETED =================
-
-                  Expanded(
-                    child: _buildMenuCard(
-                      icon: Icons.check_circle,
-                      title: 'Completed',
-                      subtitle: 'Finished tasks',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return const TaskListScreen(
-                                filterStatus: true,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
+                  TextButton(
+                    onPressed: () => _openTasks(),
+                    child: const Text('View all →'),
                   ),
                 ],
               ),
-
-              const Spacer(),
-
-              // ================= LOGOUT =================
-
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/login',
-                      (route) => false,
-                    );
-                  },
-
-                  icon: const Icon(
-                    Icons.logout,
+              const SizedBox(height: 8),
+              if (upcoming.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(26),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: line),
                   ),
-
-                  label: const Text(
-                    'LOGOUT',
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.wb_sunny_outlined,
+                        size: 34,
+                        color: orange,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        tasks.isEmpty
+                            ? 'A clear space for a clear mind.'
+                            : 'You’re all caught up!',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Add a study task and turn your plans into progress.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: muted, height: 1.5),
+                      ),
+                    ],
                   ),
+                )
+              else
+                ...upcoming.map((task) => TaskCard(task: task)),
+              const SizedBox(height: 24),
+              const Center(
+                child: Text(
+                  'Small steps today. Big things tomorrow.',
+                  style: TextStyle(color: muted, fontSize: 12),
                 ),
               ),
             ],
@@ -202,73 +293,47 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+}
 
-  // ============================================================
-  // MENU CARD
-  // ============================================================
-
-  Widget _buildMenuCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 3,
-      clipBehavior: Clip.antiAlias,
-
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-
-      child: InkWell(
-        onTap: onTap,
-
-        child: SizedBox(
-          width: double.infinity,
-          height: 170,
-
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-
-              children: [
-                Icon(
-                  icon,
-                  size: 45,
-                  color: Colors.blue,
-                ),
-
-                const SizedBox(height: 10),
-
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 5),
-
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
+class _Stat extends StatelessWidget {
+  const _Stat({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18),
+      side: const BorderSide(color: line),
+    ),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 23),
+            const SizedBox(height: 16),
+            Text(
+              '$value',
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
             ),
-          ),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(fontSize: 12, color: muted)),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
