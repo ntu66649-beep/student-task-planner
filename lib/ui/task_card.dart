@@ -20,15 +20,15 @@ class TaskCard extends StatelessWidget {
         !task.status &&
         dateOnly(task.deadline).isBefore(dateOnly(DateTime.now()));
     final priorityColor = switch (task.priority) {
-      TaskPriority.high => const Color(0xFFAA4935),
-      TaskPriority.medium => const Color(0xFF89641C),
+      TaskPriority.high => const Color(0xFFB8786B),
+      TaskPriority.medium => const Color(0xFFA88C4C),
       TaskPriority.low => teal,
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: line),
       ),
       child: Padding(
@@ -123,7 +123,7 @@ class TaskCard extends StatelessWidget {
                               '${overdue ? 'Overdue · ' : ''}${friendlyDate(task.deadline)}',
                               style: TextStyle(
                                 color: overdue
-                                    ? const Color(0xFFAA4935)
+                                    ? const Color(0xFFB8786B)
                                     : muted,
                                 fontSize: 12,
                               ),

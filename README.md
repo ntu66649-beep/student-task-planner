@@ -316,3 +316,8 @@ Chạy demo trên Android Emulator
 
 ### Mốc 5
 Nếu kịp: thử Appium Inspector nhận diện UI
+
+
+## StudyFlow shared interface
+
+The login and workspace now use the common StudyFlow design across all seven projects. See [STUDYFLOW_SYNC.md](STUDYFLOW_SYNC.md) for the palette, preserved testing behavior, run instructions and verification limits.

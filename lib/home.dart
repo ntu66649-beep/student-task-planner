@@ -5,6 +5,7 @@ import 'screens/task_list_screen.dart';
 import 'screens/add_task_screen.dart';
 import 'ui/planner_theme.dart';
 import 'ui/task_card.dart';
+import 'ui/studyflow_shell.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -42,23 +43,12 @@ class _HomePageState extends State<HomePage> {
     final pending = tasks.length - completed;
     final upcoming = tasks.where((task) => !task.status).take(3).toList();
     final progress = tasks.isEmpty ? 0.0 : completed / tasks.length;
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 80,
-        title: const Brand(),
-        actions: [
-          IconButton(
-            tooltip: 'LOGOUT',
-            onPressed: () => Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/login',
-              (_) => false,
-            ),
-            icon: const Icon(Icons.logout_rounded),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
+    return StudyFlowShell(
+      onTasks: () => _openTasks(),
+      onPending: () => _openTasks(false),
+      onCompleted: () => _openTasks(true),
+      onLogout: () =>
+          Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false),
       body: SafeArea(
         child: PlannerContent(
           child: ListView(
@@ -75,7 +65,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Make room for\nwhat matters.',
+                'Cùng học tốt hơn',
                 style: TextStyle(
                   fontSize: 39,
                   height: 1.1,
@@ -92,8 +82,8 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: ink,
-                  borderRadius: BorderRadius.circular(24),
+                  color: navy,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: LayoutBuilder(
                   builder: (context, constraints) => Row(
@@ -105,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                             const Text(
                               'A LITTLE PROGRESS, EVERY DAY',
                               style: TextStyle(
-                                color: Color(0xFFBFCEC4),
+                                color: Color(0xFFB4A4D0),
                                 fontSize: 10,
                                 letterSpacing: 1.5,
                               ),
@@ -129,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                             FilledButton.icon(
                               onPressed: _addTask,
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFECC78D),
+                                backgroundColor: const Color(0xFFB9A9F2),
                                 foregroundColor: ink,
                               ),
                               icon: const Icon(Icons.add_rounded, size: 20),
@@ -154,7 +144,7 @@ class _HomePageState extends State<HomePage> {
                                     backgroundColor: Colors.white.withValues(
                                       alpha: .12,
                                     ),
-                                    color: const Color(0xFFECC78D),
+                                    color: const Color(0xFFB9A9F2),
                                     strokeCap: StrokeCap.round,
                                   ),
                                 ),
@@ -173,7 +163,7 @@ class _HomePageState extends State<HomePage> {
                                   const Text(
                                     'complete',
                                     style: TextStyle(
-                                      color: Color(0xFFBFCEC4),
+                                      color: Color(0xFFB4A4D0),
                                       fontSize: 10,
                                     ),
                                   ),
@@ -249,7 +239,7 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.all(26),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: line),
                   ),
                   child: Column(
@@ -312,12 +302,12 @@ class _Stat extends StatelessWidget {
   Widget build(BuildContext context) => Material(
     color: Colors.white,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(12),
       side: const BorderSide(color: line),
     ),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(

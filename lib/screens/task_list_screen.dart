@@ -67,7 +67,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
           FilledButton(
             key: const ValueKey('btn_confirm_delete'),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFAB423B),
+              backgroundColor: const Color(0xFFB45A58),
             ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete'),
@@ -213,7 +213,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                         Container(
                           padding: const EdgeInsets.all(22),
                           decoration: const BoxDecoration(
-                            color: Color(0xFFE8EDE3),
+                            color: Color(0xFFF0ECFC),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(

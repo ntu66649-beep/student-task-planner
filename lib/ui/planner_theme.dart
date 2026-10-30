@@ -1,28 +1,37 @@
 import 'package:flutter/material.dart';
 
-const ink = Color(0xFF193D3A);
-const muted = Color(0xFF687D79);
-const paper = Color(0xFFF5F6F1);
-const teal = Color(0xFF22776B);
-const line = Color(0xFFE1E7DF);
-const orange = Color(0xFFDA754B);
+const navy = Color(0xFF191D33);
+const soft = Color(0xFFF0ECFC);
+
+const ink = Color(0xFF2B2D43);
+const muted = Color(0xFF78788D);
+const paper = Color(0xFFF7F8FC);
+const teal = Color(0xFF7662CF);
+const line = Color(0xFFE9E8F0);
+const orange = Color(0xFFAC7D42);
 
 ThemeData plannerTheme() {
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(8),
     borderSide: const BorderSide(color: line),
   );
   return ThemeData(
     useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(seedColor: teal, surface: Colors.white),
+    fontFamily: 'Segoe UI',
+    fontFamilyFallback: const ['Roboto', 'Arial'],
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: teal,
+      surface: Colors.white,
+    ).copyWith(primary: teal, onPrimary: Colors.white, outline: line),
     scaffoldBackgroundColor: paper,
     textTheme: ThemeData.light().textTheme.apply(
+      fontFamily: 'Segoe UI',
       bodyColor: ink,
       displayColor: ink,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: paper,
-      foregroundColor: ink,
+      backgroundColor: navy,
+      foregroundColor: Colors.white,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
@@ -43,8 +52,14 @@ ThemeData plannerTheme() {
         backgroundColor: teal,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+        side: const BorderSide(color: line),
       ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -76,7 +91,8 @@ class PlannerContent extends StatelessWidget {
 }
 
 class Brand extends StatelessWidget {
-  const Brand({super.key});
+  const Brand({super.key, this.onDark = false});
+  final bool onDark;
   @override
   Widget build(BuildContext context) => FittedBox(
     fit: BoxFit.scaleDown,
@@ -85,26 +101,50 @@ class Brand extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(9),
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: teal,
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
-            Icons.done_all_rounded,
+            Icons.layers_outlined,
             color: Colors.white,
-            size: 23,
+            size: 24,
           ),
         ),
-        const SizedBox(width: 10),
-        const Text(
-          'studyflow',
-          style: TextStyle(
-            fontSize: 23,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1,
-            color: ink,
-          ),
+        const SizedBox(width: 11),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'Study',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const TextSpan(
+                    text: 'Flow',
+                    style: TextStyle(fontWeight: FontWeight.w400),
+                  ),
+                ],
+              ),
+              style: TextStyle(
+                fontSize: 23,
+                letterSpacing: -.7,
+                color: onDark ? Colors.white : ink,
+              ),
+            ),
+            const Text(
+              'STUDENT WORKSPACE',
+              style: TextStyle(
+                fontSize: 8,
+                letterSpacing: 2,
+                color: Color(0xFF969BB6),
+              ),
+            ),
+          ],
         ),
       ],
     ),
